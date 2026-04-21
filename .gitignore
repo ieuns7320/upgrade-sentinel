@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# Rust
+rust-analyzer/target/
+**/*.rs.bk
+
+# Go
+go-collector/bin/
+go-collector/.cache/
+
+# Env
+.env
+.env.*
+
+# Reports
+reports/*.json
+reports/*.md
+

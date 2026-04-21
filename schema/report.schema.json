@@ -1,0 +1,27 @@
+{
+  "title": "UpgradeSentinelReport",
+  "type": "object",
+  "properties": {
+    "target": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "contract_name": { "type": "string" },
+          "function_name": { "type": ["string", "null"] },
+          "evidence": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["id", "severity", "title", "description", "contract_name", "evidence"]
+      }
+    }
+  },
+  "required": ["target", "findings"]
+}
