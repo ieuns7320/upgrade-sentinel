@@ -1,0 +1,51 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "MyProxy",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "upgradeTo",
+          "kind": "function",
+          "visibility": "external",
+          "modifiers": []
+        },
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "",
+          "kind": "constructor",
+          "visibility": "public",
+          "modifiers": []
+        }
+      ]
+    },
+    {
+      "nodeType": "ContractDefinition",
+      "name": "MyLogic",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "initialize",
+          "kind": "function",
+          "visibility": "public",
+          "modifiers": [
+            {
+              "modifierName": {
+                "nodeType": "Identifier",
+                "name": "initializer"
+              }
+            }
+          ]
+        },
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "setValue",
+          "kind": "function",
+          "visibility": "external",
+          "modifiers": []
+        }
+      ]
+    }
+  ]
+}
