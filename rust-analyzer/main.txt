@@ -9,10 +9,8 @@ use ast::load_ast;
 use rules::run_all_rules;
 
 fn main() {
-    // CLI 인자로 전달된 AST JSON 파일 경로를 읽는다.
     let args: Vec<String> = env::args().collect();
 
-    // 분석 대상 파일 경로가 없으면 사용법을 출력하고 종료한다.
     if args.len() < 2 {
         eprintln!("Usage: cargo run -- <path-to-ast-json>");
         std::process::exit(1);
@@ -20,7 +18,6 @@ fn main() {
 
     let path = &args[1];
 
-    // JSON 파일을 읽고 Solidity AST 일부를 Rust 구조체로 역직렬화한다.
     let ast = match load_ast(path) {
         Ok(ast) => ast,
         Err(err) => {
@@ -29,15 +26,13 @@ fn main() {
         }
     };
 
-    // 현재 구현된 UPG-001 규칙으로 initializer 노출 후보를 탐지한다.
     let findings = run_all_rules(&ast);
-    // 탐지 결과가 없으면 간단한 메시지만 출력한다.
+
     if findings.is_empty() {
         println!("No findings.");
         return;
     }
 
-    // 사람이 읽기 쉬운 CLI 요약을 먼저 출력한다.
     println!("Findings:");
     for finding in &findings {
         println!(
@@ -54,7 +49,6 @@ fn main() {
         }
     }
 
-    // 후속 처리나 리포트 생성을 위해 같은 결과를 JSON으로도 출력한다.
     println!("\nJSON:");
     match serde_json::to_string_pretty(&findings) {
         Ok(json) => println!("{}", json),
