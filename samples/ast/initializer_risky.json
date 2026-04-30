@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "LogicRisky",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "initialize",
+          "kind": "function",
+          "visibility": "public",
+          "modifiers": []
+        }
+      ]
+    }
+  ]
+}

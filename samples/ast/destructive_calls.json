@@ -1,0 +1,52 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "DestructibleLogic",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "kill",
+          "kind": "function",
+          "visibility": "external",
+          "modifiers": [],
+          "body": {
+            "statements": [
+              {
+                "nodeType": "ExpressionStatement",
+                "expression": {
+                  "nodeType": "FunctionCall",
+                  "expression": {
+                    "nodeType": "Identifier",
+                    "name": "selfdestruct"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "legacyKill",
+          "kind": "function",
+          "visibility": "public",
+          "modifiers": [],
+          "body": {
+            "statements": [
+              {
+                "nodeType": "ExpressionStatement",
+                "expression": {
+                  "nodeType": "FunctionCall",
+                  "expression": {
+                    "nodeType": "Identifier",
+                    "name": "suicide"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

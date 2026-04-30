@@ -1,0 +1,20 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "NoLowLevelCalls",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "setValue",
+          "kind": "function",
+          "visibility": "external",
+          "modifiers": [],
+          "body": {
+            "statements": []
+          }
+        }
+      ]
+    }
+  ]
+}

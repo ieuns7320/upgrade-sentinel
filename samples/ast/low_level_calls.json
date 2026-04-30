@@ -1,0 +1,49 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "LowLevelProxyLike",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "upgradeToAndCall",
+          "kind": "function",
+          "visibility": "external",
+          "modifiers": [],
+          "body": {
+            "statements": [
+              {
+                "nodeType": "ExpressionStatement",
+                "expression": {
+                  "nodeType": "FunctionCall",
+                  "expression": {
+                    "nodeType": "MemberAccess",
+                    "memberName": "delegatecall",
+                    "expression": {
+                      "nodeType": "Identifier",
+                      "name": "target"
+                    }
+                  }
+                }
+              },
+              {
+                "nodeType": "ExpressionStatement",
+                "expression": {
+                  "nodeType": "FunctionCall",
+                  "expression": {
+                    "nodeType": "MemberAccess",
+                    "memberName": "call",
+                    "expression": {
+                      "nodeType": "Identifier",
+                      "name": "target"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

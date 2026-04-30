@@ -5,38 +5,35 @@ pub fn run_all_rules(ast: &AstRoot) -> Vec<Finding> {
     let mut findings = Vec::new();
     findings.extend(detect_initializer_exposure(ast));
     findings.extend(detect_unlocked_implementation_candidate(ast));
+    findings.extend(detect_upgrade_access_control_candidate(ast));
+    findings.extend(detect_low_level_call_candidates(ast));
+    findings.extend(detect_destructive_call_candidates(ast));
     findings
 }
 
 pub fn detect_initializer_exposure(ast: &AstRoot) -> Vec<Finding> {
-    // UPG-001 탐지 결과를 누적할 목록이다.
     let mut findings = Vec::new();
 
-    // 최상위 AST 노드 중 컨트랙트 정의만 분석한다.
     for node in &ast.nodes {
         let SourceUnitNode::ContractDefinition(contract) = node else {
             continue;
         };
 
-        // 컨트랙트 내부 노드 중 함수 정의만 분석한다.
         for inner in &contract.nodes {
             let ContractNode::FunctionDefinition(func) = inner else {
                 continue;
             };
 
-            // initialize/init 이름을 가진 함수만 initializer 후보로 본다.
             let function_name_lower = func.name.trim().to_lowercase();
             if function_name_lower != "initialize" && function_name_lower != "init" {
                 continue;
             }
 
-            // visibility가 AST에 없으면 unknown으로 처리해 과도한 확정을 피한다.
             let visibility = func
                 .visibility
                 .clone()
                 .unwrap_or_else(|| "unknown".to_string());
 
-            // modifier 호출 중 Identifier 형태로 표현된 이름만 추출한다.
             let modifier_names: Vec<String> = func
                 .modifiers
                 .iter()
@@ -46,13 +43,11 @@ pub fn detect_initializer_exposure(ast: &AstRoot) -> Vec<Finding> {
                 })
                 .collect();
 
-            // OpenZeppelin 계열에서 흔히 쓰는 initializer/reinitializer modifier를 보호 신호로 본다.
             let has_initializer_modifier = modifier_names.iter().any(|m| {
                 let lower = m.to_lowercase();
                 lower == "initializer" || lower == "reinitializer"
             });
 
-            // 외부에서 호출 가능한 initializer 후보가 modifier 없이 열려 있으면 더 높은 위험도로 본다.
             let severity = match visibility.as_str() {
                 "public" | "external" => {
                     if has_initializer_modifier {
@@ -65,7 +60,6 @@ pub fn detect_initializer_exposure(ast: &AstRoot) -> Vec<Finding> {
                 _ => "MEDIUM",
             };
 
-            // modifier 존재 여부에 따라 finding 제목과 설명을 다르게 구성한다.
             let title = if has_initializer_modifier {
                 "Initializer-like function found with initializer-style modifier"
             } else {
@@ -78,7 +72,6 @@ pub fn detect_initializer_exposure(ast: &AstRoot) -> Vec<Finding> {
                 "A function named initialize/init was found without a recognized initializer-style modifier. Review whether the function is externally reachable and properly protected."
             };
 
-            // 리포트에서 사람이 판정 근거를 추적할 수 있도록 핵심 증거를 남긴다.
             let mut evidence = vec![
                 format!("Contract '{}'", contract.name),
                 format!("Function '{}'", func.name),
@@ -98,7 +91,6 @@ pub fn detect_initializer_exposure(ast: &AstRoot) -> Vec<Finding> {
                 evidence.push("Initializer-style modifier not detected".to_string());
             }
 
-            // 하나의 initializer 후보를 UPG-001 finding으로 기록한다.
             findings.push(Finding {
                 id: "UPG-001".to_string(),
                 severity: severity.to_string(),
@@ -188,6 +180,217 @@ pub fn detect_unlocked_implementation_candidate(ast: &AstRoot) -> Vec<Finding> {
                 function_name: None,
                 evidence,
             });
+        }
+    }
+
+    findings
+}
+
+pub fn detect_upgrade_access_control_candidate(ast: &AstRoot) -> Vec<Finding> {
+    let mut findings = Vec::new();
+
+    for node in &ast.nodes {
+        let SourceUnitNode::ContractDefinition(contract) = node else {
+            continue;
+        };
+
+        for inner in &contract.nodes {
+            let ContractNode::FunctionDefinition(func) = inner else {
+                continue;
+            };
+
+            let function_name_lower = func.name.trim().to_lowercase();
+
+            let is_upgrade_like = matches!(
+                function_name_lower.as_str(),
+                "upgrade" | "upgradeto" | "upgradetoandcall" | "setimplementation"
+            );
+
+            if !is_upgrade_like {
+                continue;
+            }
+
+            let visibility = func
+                .visibility
+                .clone()
+                .unwrap_or_else(|| "unknown".to_string());
+
+            let modifier_names: Vec<String> = func
+                .modifiers
+                .iter()
+                .filter_map(|m| match &m.modifier_name {
+                    Some(ModifierName::Identifier { name }) => Some(name.clone()),
+                    _ => None,
+                })
+                .collect();
+
+            let has_access_control_modifier = modifier_names.iter().any(|m| {
+                let lower = m.to_lowercase();
+                lower.contains("onlyowner")
+                    || lower.contains("onlyadmin")
+                    || lower.contains("adminonly")
+                    || lower.contains("onlyrole")
+                    || lower.contains("auth")
+            });
+
+            let externally_reachable = matches!(visibility.as_str(), "public" | "external");
+
+            if externally_reachable && !has_access_control_modifier {
+                let mut evidence = vec![
+                    format!("Contract '{}'", contract.name),
+                    format!("Function '{}'", func.name),
+                    "Name matches upgrade-like sensitive function pattern".to_string(),
+                    format!("Visibility '{}'", visibility),
+                ];
+
+                if modifier_names.is_empty() {
+                    evidence.push("No recognized modifier names found".to_string());
+                } else {
+                    evidence.push(format!("Modifiers: {}", modifier_names.join(", ")));
+                }
+
+                evidence.push("No recognized access-control modifier detected".to_string());
+
+                findings.push(Finding {
+                    id: "UPG-003".to_string(),
+                    severity: "HIGH".to_string(),
+                    title: "Upgrade-like function may lack access control".to_string(),
+                    description: "An externally reachable upgrade-like function was found without a recognized access-control modifier. Review whether upgrade authorization is properly enforced.".to_string(),
+                    contract_name: contract.name.clone(),
+                    function_name: Some(func.name.clone()),
+                    evidence,
+                });
+            }
+        }
+    }
+
+    findings
+}
+
+pub fn detect_low_level_call_candidates(ast: &AstRoot) -> Vec<Finding> {
+    let mut findings = Vec::new();
+
+    for node in &ast.nodes {
+        let SourceUnitNode::ContractDefinition(contract) = node else {
+            continue;
+        };
+
+        for inner in &contract.nodes {
+            let ContractNode::FunctionDefinition(func) = inner else {
+                continue;
+            };
+
+            let Some(body) = &func.body else {
+                continue;
+            };
+
+            for stmt in &body.statements {
+                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                    continue;
+                };
+
+                let Expression::FunctionCall(call) = &expr_stmt.expression else {
+                    continue;
+                };
+
+                let low_level_member = match call.expression.as_ref() {
+                    Expression::MemberAccess(member)
+                        if member.member_name == "delegatecall" || member.member_name == "call" =>
+                    {
+                        Some(member.member_name.clone())
+                    }
+                    _ => None,
+                };
+
+                let Some(member_name) = low_level_member else {
+                    continue;
+                };
+
+                let severity = if member_name == "delegatecall" {
+                    "HIGH"
+                } else {
+                    "MEDIUM"
+                };
+
+                findings.push(Finding {
+                    id: "UPG-004".to_string(),
+                    severity: severity.to_string(),
+                    title: format!("Low-level {} usage detected", member_name),
+                    description: format!(
+                        "A low-level {} usage pattern was detected. Review whether the target, input data, return handling, and authorization checks are safe.",
+                        member_name
+                    ),
+                    contract_name: contract.name.clone(),
+                    function_name: Some(func.name.clone()),
+                    evidence: vec![
+                        format!("Contract '{}'", contract.name),
+                        format!("Function '{}'", func.name),
+                        format!("Low-level member access '{}'", member_name),
+                    ],
+                });
+            }
+        }
+    }
+
+    findings
+}
+
+pub fn detect_destructive_call_candidates(ast: &AstRoot) -> Vec<Finding> {
+    let mut findings = Vec::new();
+
+    for node in &ast.nodes {
+        let SourceUnitNode::ContractDefinition(contract) = node else {
+            continue;
+        };
+
+        for inner in &contract.nodes {
+            let ContractNode::FunctionDefinition(func) = inner else {
+                continue;
+            };
+
+            let Some(body) = &func.body else {
+                continue;
+            };
+
+            for stmt in &body.statements {
+                let Statement::ExpressionStatement(expr_stmt) = stmt else {
+                    continue;
+                };
+
+                let Expression::FunctionCall(call) = &expr_stmt.expression else {
+                    continue;
+                };
+
+                let destructive_name = match call.expression.as_ref() {
+                    Expression::Identifier { name }
+                        if name == "selfdestruct" || name == "suicide" =>
+                    {
+                        Some(name.clone())
+                    }
+                    _ => None,
+                };
+
+                let Some(name) = destructive_name else {
+                    continue;
+                };
+
+                findings.push(Finding {
+                    id: "UPG-005".to_string(),
+                    severity: "HIGH".to_string(),
+                    title: format!("Destructive {} usage detected", name),
+                    description: format!(
+                        "A destructive {} usage pattern was detected. Review whether contract destruction is intended, authorized, and safe in the upgradeable architecture.",
+                        name
+                    ),
+                    contract_name: contract.name.clone(),
+                    function_name: Some(func.name.clone()),
+                    evidence: vec![
+                        format!("Contract '{}'", contract.name),
+                        format!("Function '{}'", func.name),
+                        format!("Destructive call '{}'", name),
+                    ],
+                });
+            }
         }
     }
 

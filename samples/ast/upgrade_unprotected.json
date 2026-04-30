@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "UnprotectedProxy",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "upgradeTo",
+          "kind": "function",
+          "visibility": "external",
+          "modifiers": [],
+          "body": {
+            "statements": []
+          }
+        },
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "upgradeToAndCall",
+          "kind": "function",
+          "visibility": "public",
+          "modifiers": [],
+          "body": {
+            "statements": []
+          }
+        }
+      ]
+    }
+  ]
+}

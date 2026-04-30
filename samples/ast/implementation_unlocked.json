@@ -1,0 +1,30 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "LogicUnlocked",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "",
+          "kind": "constructor",
+          "visibility": "public",
+          "modifiers": [],
+          "body": {
+            "statements": []
+          }
+        },
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "initialize",
+          "kind": "function",
+          "visibility": "public",
+          "modifiers": [],
+          "body": {
+            "statements": []
+          }
+        }
+      ]
+    }
+  ]
+}

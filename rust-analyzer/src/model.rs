@@ -90,11 +90,19 @@ pub enum Expression {
     Identifier {
         name: String,
     },
+    MemberAccess(MemberAccess),
     #[serde(other)]
     Other,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct FunctionCall {
+    pub expression: Box<Expression>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MemberAccess {
+    #[serde(rename = "memberName")]
+    pub member_name: String,
     pub expression: Box<Expression>,
 }

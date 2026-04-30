@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::model::{AstRoot, ContractNode, SourceUnitNode};
+use crate::model::AstRoot;
 
 pub fn load_ast(path: &str) -> Result<AstRoot, String> {
     // 지정된 경로의 AST JSON 파일을 문자열로 읽는다.

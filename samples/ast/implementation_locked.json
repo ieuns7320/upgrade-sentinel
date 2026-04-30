@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "nodeType": "ContractDefinition",
+      "name": "LogicLocked",
+      "nodes": [
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "",
+          "kind": "constructor",
+          "visibility": "public",
+          "modifiers": [],
+          "body": {
+            "statements": [
+              {
+                "nodeType": "ExpressionStatement",
+                "expression": {
+                  "nodeType": "FunctionCall",
+                  "expression": {
+                    "nodeType": "Identifier",
+                    "name": "_disableInitializers"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "nodeType": "FunctionDefinition",
+          "name": "initialize",
+          "kind": "function",
+          "visibility": "public",
+          "modifiers": [
+            {
+              "modifierName": {
+                "nodeType": "Identifier",
+                "name": "initializer"
+              }
+            }
+          ],
+          "body": {
+            "statements": []
+          }
+        }
+      ]
+    }
+  ]
+}
